@@ -14,8 +14,11 @@ Este projeto é um ambiente criado para o curso de Ciência da Computação do I
 Abra o terminal na pasta do projeto e execute:
 
 ```
-vagrant up
+vagrant up #na segunda vez recomendasse usar --provision como parâmetro.
 ```
+
+> Qual a diferença entre usar o parâmetro --provision
+
 
 > Nota: Na primeira vez, o Vagrant irá baixar a imagem base do Ubuntu (ubuntu/jammy64), o que pode levar alguns minutos dependendo da sua conexão de internet.
 
