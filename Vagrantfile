@@ -1,7 +1,7 @@
 Vagrant.configure("2") do |config|
   # Box padrão do Ubuntu 22.04 LTS para todas as VMs
   config.vm.box = "ubuntu/jammy64"
-  config.ssh.insert_key = false #desabilita chave insegura por uma chave única gerada para cada VM
+  config.ssh.insert_key = true # habilita a chave padrão do Vagrant para login via vagrant ssh
 
   # 1. Nó de Controle (Onde o Ansible será executado)
   config.vm.define "control" do |control|
