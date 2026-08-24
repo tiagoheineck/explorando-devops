@@ -2,7 +2,7 @@ name: Build Docker Image
 
 on:
   push:
-    branches: [ ci/github-action ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -13,12 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Construir imagem
-        run: cd spring && docker build -t explorando-devops:latest .
-      
-      - name: Verificar imagem
-        run: |
-          docker images
-          docker run explorando-devops:latest
+        run: cd spring && docker build -t explorando-devops:latest .      
       
       - name: Publicar no GHCR
         run: |
