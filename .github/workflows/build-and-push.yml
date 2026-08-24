@@ -1,0 +1,27 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches: [ ci/github-action ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Construir imagem
+        run: docker build -t explorando-devops:latest .
+      
+      - name: Verificar imagem
+        run: |
+          docker images
+          docker run explorando-devops:latest
+      
+      - name: Publicar no GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker tag explorando-devops:latest ghcr.io/${{ github.repository }}/explorando-devops:latest
+          docker push ghcr.io/${{ github.repository }}/explorando-devops:latest
