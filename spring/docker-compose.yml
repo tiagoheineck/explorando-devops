@@ -1,0 +1,36 @@
+services:  
+  pgsql:
+    image: postgres:15    
+    profiles:
+      - dev
+    env_file:
+      - .env      
+    ports:
+      - "54329:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_BASE}   
+    volumes:
+      - ./.docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+    profiles:
+      - dev
+    working_dir: /app
+    volumes:
+      - ./:/app:cached
+      - ./target:/app/target:delegated
+    depends_on:
+      - pgsql      
+    ports:    
+      - "8080:8080"
+      - "35729:35729"
+      - "5005:5005"
+    env_file:
+      - .env    
+    environment:
+      - SPRING_DEVTOOLS_RESTART_ENABLED=true
+      - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=true
