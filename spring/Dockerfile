@@ -12,8 +12,8 @@ FROM eclipse-temurin:21-jdk AS runner
 ENV TZ=America/Sao_Paulo
 ENV JAVA_TOOL_OPTIONS="-Duser.timezone=America/Sao_Paulo"
 
-COPY --from=builder /app/target/raiz-api.jar /raiz-api.jar
+COPY --from=builder /app/target/project-0.0.1-SNAPSHOT.jar /project.jar
 
-ENTRYPOINT ["java","-Dhttps.protocols=TLSv1.1,TLSv1.2","-Djavax.net.debug=ssl", "-jar","/raiz-api.jar"]
+ENTRYPOINT ["java","-Dhttps.protocols=TLSv1.1,TLSv1.2","-Djavax.net.debug=ssl", "-jar","/project.jar"]
 
 EXPOSE 80
