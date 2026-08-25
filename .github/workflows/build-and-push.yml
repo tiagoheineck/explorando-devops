@@ -2,7 +2,7 @@ name: Build Docker Image
 
 on:
   push:
-    branches: [ ci/github-action ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
