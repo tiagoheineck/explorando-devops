@@ -15,8 +15,11 @@ jobs:
       - name: Construir imagem
         run: cd spring && docker build -t explorando-devops:latest .      
       
-      - name: Publicar no GHCR
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker tag explorando-devops:latest ghcr.io/${{ github.repository }}/explorando-devops:latest
-          docker push ghcr.io/${{ github.repository }}/explorando-devops:latest
+  production:
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      
+      - name: Colocar em prod
+        run: echo "Colocando em produção"
