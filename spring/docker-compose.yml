@@ -6,7 +6,7 @@ services:
     env_file:
       - .env      
     ports:
-      - "54329:5432"
+      - "55432:5432"
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
