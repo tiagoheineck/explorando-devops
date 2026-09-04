@@ -1,42 +1,112 @@
-services:  
-  pgsql:
-    image: postgres:15    
-    profiles:
-      - dev
-    env_file:
-      - .env      
-    ports:
-      - "55432:5432"
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_BASE}   
-    volumes:
-      - ./.docker/init.sql:/docker-entrypoint-initdb.d/init.sql
-  web:
+services:
+  app:
     build:
       context: .
-      dockerfile: ./Dockerfile.dev
-    profiles:
-      - dev
-    working_dir: /app
-    volumes:
-      - ./:/app:cached
-      - ./target:/app/target:delegated
-    depends_on:
-      - pgsql      
-    ports:    
-      - "8080:8080"
-      - "35729:35729"
-      - "5005:5005"
-    env_file:
-      - .env    
-    environment:
-      - SPRING_DEVTOOLS_RESTART_ENABLED=true
-      - SPRING_DEVTOOLS_LIVERELOAD_ENABLED=true
-  selenium:
-    image: selenium/standalone-chrome:latest
-    profiles:
-      - qa
+      dockerfile: Dockerfile
+    container_name: observability-app
+    restart: unless-stopped
     ports:
-      - "4444:4444"
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      GRAYLOG_HOST: graylog
+      GRAYLOG_PORT: 12201
+    depends_on:
+      - graylog
+    networks:
+      - observability
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: observability-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: observability-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - observability
+
+  mongodb:
+    image: mongo:5.0
+    container_name: observability-mongodb
+    restart: unless-stopped
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - observability
+
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: observability-opensearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: "false"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      - observability
+
+  graylog:
+    image: graylog/graylog:5.2
+    container_name: observability-graylog
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - opensearch
+    environment:
+      GRAYLOG_PASSWORD_SECRET: "6fd7d5d0bbd8f4f111e2d869f8c4e3cf"
+      GRAYLOG_ROOT_PASSWORD_SHA2: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fcf8f61c6f9efb3a4d0f4e"
+      GRAYLOG_HTTP_BIND_ADDRESS: "0.0.0.0:9000"
+      GRAYLOG_ELASTICSEARCH_HOSTS: "http://opensearch:9200"
+      GRAYLOG_MONGODB_URI: "mongodb://mongodb:27017/graylog"
+      TZ: "America/Sao_Paulo"
+    ports:
+      - "9000:9000"
+      - "12201:12201/udp"
+    volumes:
+      - graylog-data:/usr/share/graylog/data
+    networks:
+      - observability
+
+volumes:
+  mongodb-data:
+  opensearch-data:
+  grafana-data:
+  graylog-data:
+
+networks:
+  observability:
+    driver: bridge
+
